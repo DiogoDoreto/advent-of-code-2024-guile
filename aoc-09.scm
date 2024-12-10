@@ -1,0 +1,97 @@
+(load "./aoc-lib.scm")
+(use-modules (aoc-lib)
+             (srfi srfi-1)
+             (srfi srfi-171))
+
+(define biginput (string-trim-right (read-file-as-string "./aoc-09-input.txt")))
+(define smallinput "2333133121414131402")
+
+(define* (make-block type #:optional (len 0) (id 0))
+  (list type len id))
+
+(define block-type car)
+(define block-length cadr)
+(define block-id caddr)
+
+(define (block-file? block)
+  (eqv? 'file (block-type block)))
+
+(define (block-space? block)
+  (eqv? 'space (block-type block)))
+
+(define* (block-expand id len #:optional margin)
+  (cons (make-block 'file len id)
+        (if margin (list (make-block 'space margin)) '())))
+
+(define (expand-dense-disk-map input)
+  (string-transduce (compose (tmap char->number)
+                             (tsegment 2)
+                             (tenumerate)
+                             (tappend-map (λ (block) (apply block-expand block))))
+                    rcons input))
+
+(define (fragmented-disk-target-length input)
+  (string-transduce (compose (tsegment 2)
+                             (tmap car)
+                             (tmap char->number))
+                    + input))
+
+(define (compact-disk-fragmented layout)
+  (let* ((disk-len (fragmented-disk-target-length layout))
+         (expanded (expand-dense-disk-map layout))
+         (reversed (reverse expanded))
+         (processed 0))
+    (define (take-fragment len)
+      (let* ((b (car reversed))
+             (bl (block-length b)))
+        (cond ((block-space? b)
+               (set! reversed (cdr reversed))
+               (take-fragment len))
+              ((= len bl)
+               (set! reversed (cdr reversed))
+               (list b))
+              ((> len bl)
+               (set! reversed (cdr reversed))
+               (append (list b) (take-fragment (- len bl))))
+              (else
+               (set! reversed (cons (make-block (block-type b) (- bl len) (block-id b))
+                                    (cdr reversed)))
+               (list (make-block (block-type b) len (block-id b)))))))
+    (list-transduce (compose (ttake-while (λ (b) (< processed disk-len)))
+                             (tappend-map (λ (b)
+                                            (if (block-file? b)
+                                                (if (< disk-len (+ processed (block-length b)))
+                                                    (list (make-block 'file (- disk-len processed) (block-id b)))
+                                                    (list b))
+                                                (take-fragment (block-length b)))))
+                             (tlog (λ (r b) (set! processed (+ processed (block-length b))))))
+                    rcons expanded)))
+
+(define (checksum input)
+  (list-transduce (compose (tappend-map (λ (b) (make-list (block-length b) (block-id b))))
+                           (tenumerate)
+                           (tmap (λ (p) (* (car p) (cdr p)))))
+                  + input))
+
+(format #t "Part 1: ~a\n" (checksum (compact-disk-fragmented biginput)))
+
+(define (space-with-len len b)
+  (and (block-space? b) (<= len (block-length b))))
+
+(define (compact-disk-whole layout)
+  (reverse (let loop ((disk (reverse (expand-dense-disk-map layout))))
+             (if (nil? disk) disk
+                 (let* ((b (car disk)) (bl (block-length b)))
+                   (if (block-space? b) (cons b (loop (cdr disk)))
+                       (let ((next-gap-pair (member-right bl disk space-with-len)))
+                         (if (not next-gap-pair) (cons b (loop (cdr disk)))
+                             (let ((gap-len (block-length (car next-gap-pair))))
+                               (if (= gap-len bl)
+                                   (set-car! next-gap-pair b)
+                                   (begin
+                                     (set-car! next-gap-pair (make-block 'space (- gap-len bl)))
+                                     (set-cdr! next-gap-pair
+                                               (cons b (cdr next-gap-pair)))))
+                               (cons (make-block 'space bl) (loop (cdr disk))))))))))))
+
+(format #t "Part 2: ~a\n" (checksum (compact-disk-whole biginput)))

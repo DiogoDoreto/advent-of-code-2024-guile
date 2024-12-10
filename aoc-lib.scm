@@ -80,3 +80,12 @@
 (define-public (pretty-print-hash-table ht)
   (hash-for-each (lambda (key value) (format #t "~a: ~a\n" key value))
                  ht))
+
+(define* (member-right x lst #:optional (proc =))
+  (if (nil? lst) #f
+      (or (member-right x (cdr lst) proc)
+          (and (proc x (car lst)) lst))))
+(export member-right)
+
+(define-public (char->number c)
+  (- (char->integer c) (char->integer #\0)))
