@@ -40,10 +40,13 @@
          (c2y (coord-y c2)))
     (make-coord (+ c2x c1x) (+ c2y c1y))))
 
-(define-public (coord-inverse coord)
+(define-public (coord-multiply coord n)
   (let ((x (coord-x coord))
         (y (coord-y coord)))
-    (make-coord (* x -1) (* y -1))))
+    (make-coord (* x n) (* y n))))
+
+(define-public (coord-inverse coord)
+  (coord-multiply coord -1))
 
 (define-public (grid-ref grid coord)
   "Returns the value in COORD or nil"
@@ -89,3 +92,8 @@
 
 (define-public (char->number c)
   (- (char->integer c) (char->integer #\0)))
+
+(define *eof-object* (read (open-input-string "")))
+(define-public (eof-object)
+  "useful for terminating generators"
+  *eof-object*)
