@@ -1,0 +1,48 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>AOC 14</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css" media="screen">
+        body {
+            margin: 0px;
+            height: 100vh;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        svg {
+            width: 2vw;
+            height: fit-content;
+        }
+    </style>
+
+</head>
+
+<body>
+    <script src="./aoc-14-output.js"></script>
+    <script>
+        for (let i = 0; i < robots.length; i++) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg')
+            svg.setAttribute('viewBox', '0 0 101 103')
+            svg.setAttribute('title', i)
+            for (const [x, y] of robots[i]) {
+                const r = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                r.setAttribute('x', x)
+                r.setAttribute('y', y)
+                r.setAttribute('width', 1)
+                r.setAttribute('height', 1)
+                r.setAttribute('fill', 'green')
+                svg.appendChild(r)
+            }
+            document.body.appendChild(svg)
+        }
+    </script>
+</body>
+
+</html>

@@ -1,10 +1,13 @@
 (define-module (aoc-lib))
 
 (use-modules (ice-9 textual-ports)
-             (ice-9 exceptions))
+             (ice-9 exceptions)
+             (srfi srfi-171))
 
 (define-public (read-file-as-string path)
   (get-string-all (open path O_RDONLY)))
+
+(define-public char-set:number (char-set-adjoin char-set:digit #\-))
 
 (define-public (parse-numbers text)
   "Return a list of numbers from string"
@@ -13,6 +16,9 @@
 (define-public (string->nllist text)
   "split a string by newlines and then each line into a list of chars"
   (map string->list (string-split (string-trim-right text) #\newline)))
+
+(define-public (char->number c)
+  (- (char->integer c) (char->integer #\0)))
 
 (define-public make-coord cons)
 (define-public coord-x car)
@@ -26,19 +32,21 @@
   (make-coord (coord-x coord)
               (+ (coord-y coord) dy)))
 
+(define-public (coord-op op c1 c2)
+  (let ((c1x (coord-x c1))
+        (c1y (coord-y c1))
+        (c2x (coord-x c2))
+        (c2y (coord-y c2)))
+    (make-coord (op c1x c2x) (op c1y c2y))))
+
 (define-public (coord-diff c1 c2)
-  (let* ((c1x (coord-x c1))
-         (c1y (coord-y c1))
-         (c2x (coord-x c2))
-         (c2y (coord-y c2)))
-    (make-coord (- c2x c1x) (- c2y c1y))))
+  (coord-op - c2 c1))
 
 (define-public (coord-add c1 c2)
-  (let* ((c1x (coord-x c1))
-         (c1y (coord-y c1))
-         (c2x (coord-x c2))
-         (c2y (coord-y c2)))
-    (make-coord (+ c2x c1x) (+ c2y c1y))))
+  (coord-op + c1 c2))
+
+(define-public (coord-mod c1 c2)
+  (coord-op modulo c1 c2))
 
 (define-public (coord-multiply coord n)
   (let ((x (coord-x coord))
@@ -90,10 +98,13 @@
           (and (proc x (car lst)) lst))))
 (export member-right)
 
-(define-public (char->number c)
-  (- (char->integer c) (char->integer #\0)))
-
 (define *eof-object* (read (open-input-string "")))
 (define-public (eof-object)
   "useful for terminating generators"
   *eof-object*)
+
+(define-public tchar->numbers (compose
+                               (tpartition (λ (c) (char-set-contains? char-set:number c)))
+                               (tfilter (λ (lst) (char-set-contains? char-set:number (car lst))))
+                               (tmap list->string)
+                               (tmap string->number)))
