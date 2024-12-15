@@ -82,6 +82,11 @@
   (let ((row (list-ref grid (coord-y coord))))
     (list-set! row (coord-x coord) value)))
 
+(define-public (grid-find-coord grid pred)
+  (let loop ((coord (make-coord 0 0)))
+    (if (or (nil? coord) (pred (grid-ref grid coord))) coord
+        (loop (grid-next-coord grid coord)))))
+
 (define-public (combine-pairs-for-each proc lst)
   (let ((head (car lst)) (tail (cdr lst)))
     (when (not (nil? tail))
