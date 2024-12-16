@@ -113,3 +113,21 @@
                                (tfilter (λ (lst) (char-set-contains? char-set:number (car lst))))
                                (tmap list->string)
                                (tmap string->number)))
+
+(define-public (make-priority-queue) '())
+
+(define-public (pqueue-add q value cost)
+  (if (or (nil? q) (< cost (caar q)))
+      (cons (cons cost value) q)
+      (cons (car q) (pqueue-add (cdr q) value cost))))
+
+(define-public (pqueue-head q)
+  (cdar q))
+
+(define-public (pqueue-drop q)
+  (cdr q))
+
+(define-public (pqueue-has? q value)
+  (and (not (nil? q))
+       (or (equal? (pqueue-head q) value)
+           (pqueue-has? (cdr q) value))))
